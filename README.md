@@ -1,25 +1,55 @@
-## Mathematical & Physical Modeling, Simple PDE: Wave Equation
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
-The project simulates the propagation of two-dimensional waves (ripples on a water basin) by solving the classical wave equation for vibrating strings and membranes:
+# --- 1. Paramètres de la membrane et de la simulation ---
+N = 200          # Résolution de la grille
+L = np.pi        # Taille du domaine spatial [0, L]
+x = np.linspace(0, L, N)
+y = np.linspace(0, L, N)
+X, Y = np.meshgrid(x, y)
 
-$$\frac{\partial^2 u}{\partial t^2} = c^2 \left( \frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} \right)$$
+c = 1.0          # Vitesse de propagation
 
-Where:
-* $u(x, y, t)$ represents the amplitude (water height) at point $(x, y)$ and time $t$.
-* $c$ is the wave propagation speed in the medium.
-* The right-hand side corresponds to the spatial Laplacian operator $\Delta u$, which measures the local curvature of the water surface.
+# --- 2. Fonction calculant la solution analytique exacte ---
+# Basée sur la séparation des variables : u(x, y, t) = X(x) * Y(y) * T(t)
+def get_wave(t):
+    u = np.zeros((N, N))
+    
+    # Définition de modes propres (m, n) avec leurs amplitudes initiales
+    modes = [
+        {"m": 1, "n": 1, "A": 1.0},
+        {"m": 2, "n": 1, "A": 0.6},
+        {"m": 1, "n": 2, "A": 0.5},
+        {"m": 2, "n": 2, "A": 0.3}
+    ]
+    
+    for mode in modes:
+        m, n, A = mode["m"], mode["n"], mode["A"]
+        
+        # Pulsation propre omega_mn issue de la séparation en temps
+        omega_mn = c * np.pi * np.sqrt((m / L)**2 + (n / L)**2)
+        
+        # Formule analytique : sin(m*pi*x/L) * sin(n*pi*y/L) * cos(omega_mn * t)
+        spatial_x = np.sin(m * X * np.pi / L)
+        spatial_y = np.sin(n * Y * np.pi / L)
+        temporal = np.cos(omega_mn * t)
+        
+        u += A * spatial_x * spatial_y * temporal
+        
+    return u
 
-### Numerical Discretization (Finite Differences)
+# --- 3. Configuration de la figure graphique ---
+plt.style.use('dark_background')
+fig, ax = plt.subplots(figsize=(8, 7))
 
-To implement this equation algorithmically, we use an explicit second-order centered finite difference scheme in space and time:
+# Affichage du premier état à t = 0
+im = ax.imshow(get_wave(0), cmap='ocean', animated=True, vmin=-2.0, vmax=2.0, interpolation='bicubic')
+cbar = plt.colorbar(im, label="Amplitude de la membrane")
+cbar.ax.yaxis.set_tick_params(color='white')
 
-$$u_{i,j}^{n+1} = 2u_{i,j}^n - u_{i,j}^{n-1} + \left(\frac{c \Delta t}{\Delta x}\right)^2 \left( u_{i+1,j}^n + u_{i-1,j}^n + u_{i,j+1}^n + u_{i,j-1}^n - 4u_{i,j}^n \right)$$
-
-### Boundary Conditions & Obstacles
-
-* **Boundary conditions:** The edges of the domain impose a zero amplitude ($u = 0$), acting as fixed or absorbing walls.
-* **Obstacle (Rock):** A spatial boolean mask is applied to block wave propagation (`u_next[rock_mask] = 0.0`), creating realistic physical phenomena of **reflection** and **diffraction** as waves flow around the central island.
-* **Damping:** An attenuation factor is applied at each time step to naturally dissipate energy, simulating fluid viscosity.
+ax.set_title("Vibration d'une membrane carrée — Séparation des variables\n(Superposition de modes propres analytiques)", fontsize=11, color='cyan')
+ax.axis('off')
 
   
 <img width="1450" height="720" alt="image" src="https://github.com/user-attachments/assets/3709ab11-5e46-4e8f-b4c2-ebd2f32315ee" />
