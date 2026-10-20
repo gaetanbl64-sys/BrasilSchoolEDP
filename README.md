@@ -1,25 +1,65 @@
-## Mathematical & Physical Modeling, Simple PDE: Wave Equation
+# 2D Wave Equation & Membrane Simulation
 
-The project simulates the propagation of two-dimensional waves (ripples on a water basin) by solving the classical wave equation for vibrating strings and membranes:
+This repository explores the modeling and simulation of the **two-dimensional wave equation**, comparing the traditional analytical approach (separation of variables) with a high-performance numerical approach using finite differences in Python.
 
-$$\frac{\partial^2 u}{\partial t^2} = c^2 \left( \frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} \right)$$
+---
+
+## 🔬 Theoretical Background: Analytical vs. Numerical
+
+### 1. The Continuous Wave Equation
+The physical phenomenon governing both wave basins and vibrating membranes is the 2D wave equation:
+
+$$\frac{\partial^2 u}{\partial t^2} = c^2 \left( \frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} \right) = c^2 \Delta u$$
 
 Where:
-* $u(x, y, t)$ represents the amplitude (water height) at point $(x, y)$ and time $t$.
-* $c$ is the wave propagation speed in the medium.
-* The right-hand side corresponds to the spatial Laplacian operator $\Delta u$, which measures the local curvature of the water surface.
+* $u(x, y, t)$ is the wave amplitude / membrane displacement.
+* $c$ is the wave propagation speed.
+* $\Delta u$ is the spatial Laplacian.
 
-### Numerical Discretization (Finite Differences)
+---
 
-To implement this equation algorithmically, we use an explicit second-order centered finite difference scheme in space and time:
+### 2. The Analytical Approach: Separation of Variables
+In classical mathematical physics, one assumes a solution of the form:
+$$u(x, y, t) = X(x) Y(y) T(t)$$
 
-$$u_{i,j}^{n+1} = 2u_{i,j}^n - u_{i,j}^{n-1} + \left(\frac{c \Delta t}{\Delta x}\right)^2 \left( u_{i+1,j}^n + u_{i-1,j}^n + u_{i,j+1}^n + u_{i,j-1}^n - 4u_{i,j}^n \right)$$
+By separating variables and applying homogeneous Dirichlet boundary conditions ($u = 0$ at the borders), the spatial modes are expressed as combinations of sine functions:
+$$u(x, y, t) = \sum_{m,n} A_{mn} \sin\left(\frac{m \pi x}{L}\right) \sin\left(\frac{n \pi y}{L}\right) \cos(\omega_{mn} t)$$
 
-### Boundary Conditions & Obstacles
+* **Pros:** Exact mathematical solution; perfect for finding natural resonant frequencies ( eigenmodes ) of ideal rectangular geometries.
+* **Cons:** Becomes computationally intractable or analytically impossible when dealing with local interactive disturbances (like clicking to drop a Gaussian droplet) or complex, irregular boundaries.
 
-* **Boundary conditions:** The edges of the domain impose a zero amplitude ($u = 0$), acting as fixed or absorbing walls.
-* **Obstacle (Rock):** A spatial boolean mask is applied to block wave propagation (`u_next[rock_mask] = 0.0`), creating realistic physical phenomena of **reflection** and **diffraction** as waves flow around the central island.
-* **Damping:** An attenuation factor is applied at each time step to naturally dissipate energy, simulating fluid viscosity.
+---
+
+### 3. The Numerical Approach: Finite Differences Method (FDM)
+To overcome the limitations of analytical series expansion for real-time interactivity, we discretize the continuous domain into a grid of indices $u_{i,j}^n$ where $x = i \cdot dx$, $y = j \cdot dx$, and $t = n \cdot dt$.
+
+#### A. Temporal Discretization (Centered Taylor Series)
+$$\frac{\partial^2 u}{\partial t^2} \approx \frac{u_{i,j}^{n+1} - 2u_{i,j}^n + u_{i,j}^{n-1}}{dt^2}$$
+
+#### B. Spatial Discretization (5-Point Stencil Laplacian)
+$$\Delta u \approx \frac{u_{i+1,j}^n + u_{i-1,j}^n + u_{i,j+1}^n + u_{i,j-1}^n - 4u_{i,j}^n}{dx^2}$$
+
+#### C. Explicit Time-Stepping Update Rule
+Combining these approximations yields the explicit recurrence formula implemented in our simulation loop:
+
+$$u_{i,j}^{n+1} = \left( 2u_{i,j}^n - u_{i,j}^{n-1} + \left(\frac{c \cdot dt}{dx}\right)^2 \Delta u_{\text{spatial}} \right) \times \text{damping}$$
+
+---
+
+## ⚙️ Key Numerical Parameters
+
+* **$\text{factor} = \left(\frac{c \cdot dt}{dx}\right)^2$**: Governs the Courant-Friedrichs-Lewy (CFL) stability criterion. Ensuring this ratio remains within stable bounds prevents numerical divergence.
+* **$\text{damping}$ (e.g., $0.993$):** Introduces energy dissipation (mimicking fluid viscosity or internal material friction) to prevent infinite reflections.
+* **Boundary Conditions:** Fixed edges enforced by setting boundary matrices to zero ($u = 0$).
+
+---
+
+## 🚀 Getting Started
+
+Make sure you have Python installed along with the required scientific libraries:
+
+```bash
+pip install numpy matplotlib
 
   
 <img width="1450" height="720" alt="image" src="https://github.com/user-attachments/assets/3709ab11-5e46-4e8f-b4c2-ebd2f32315ee" />
