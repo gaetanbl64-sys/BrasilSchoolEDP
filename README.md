@@ -1,55 +1,57 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+# 2D Wave Equation & Membrane Simulation
 
-# --- 1. Paramètres de la membrane et de la simulation ---
-N = 200          # Résolution de la grille
-L = np.pi        # Taille du domaine spatial [0, L]
-x = np.linspace(0, L, N)
-y = np.linspace(0, L, N)
-X, Y = np.meshgrid(x, y)
+A Python-based scientific simulation exploring two-dimensional wave propagation and elastic membrane vibrations. This project bridges theoretical mathematical modeling (partial differential equations and separation of variables) with efficient numerical methods (finite difference schemes) implemented via NumPy and Matplotlib.
 
-c = 1.0          # Vitesse de propagation
+---
 
-# --- 2. Fonction calculant la solution analytique exacte ---
-# Basée sur la séparation des variables : u(x, y, t) = X(x) * Y(y) * T(t)
-def get_wave(t):
-    u = np.zeros((N, N))
-    
-    # Définition de modes propres (m, n) avec leurs amplitudes initiales
-    modes = [
-        {"m": 1, "n": 1, "A": 1.0},
-        {"m": 2, "n": 1, "A": 0.6},
-        {"m": 1, "n": 2, "A": 0.5},
-        {"m": 2, "n": 2, "A": 0.3}
-    ]
-    
-    for mode in modes:
-        m, n, A = mode["m"], mode["n"], mode["A"]
-        
-        # Pulsation propre omega_mn issue de la séparation en temps
-        omega_mn = c * np.pi * np.sqrt((m / L)**2 + (n / L)**2)
-        
-        # Formule analytique : sin(m*pi*x/L) * sin(n*pi*y/L) * cos(omega_mn * t)
-        spatial_x = np.sin(m * X * np.pi / L)
-        spatial_y = np.sin(n * Y * np.pi / L)
-        temporal = np.cos(omega_mn * t)
-        
-        u += A * spatial_x * spatial_y * temporal
-        
-    return u
+## 🔬 Mathematical & Physical Modeling
 
-# --- 3. Configuration de la figure graphique ---
-plt.style.use('dark_background')
-fig, ax = plt.subplots(figsize=(8, 7))
+### 1. The Continuous Wave Equation
+The physical system is governed by the classical two-dimensional wave equation for vibrating media:
 
-# Affichage du premier état à t = 0
-im = ax.imshow(get_wave(0), cmap='ocean', animated=True, vmin=-2.0, vmax=2.0, interpolation='bicubic')
-cbar = plt.colorbar(im, label="Amplitude de la membrane")
-cbar.ax.yaxis.set_tick_params(color='white')
+$$\frac{\partial^2 u}{\partial t^2} = c^2 \left( \frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} \right) = c^2 \Delta u$$
 
-ax.set_title("Vibration d'une membrane carrée — Séparation des variables\n(Superposition de modes propres analytiques)", fontsize=11, color='cyan')
-ax.axis('off')
+Where:
+* $u(x, y, t)$ represents the displacement amplitude at point $(x, y)$ and time $t$.
+* $c$ is the wave propagation speed in the medium.
+* $\Delta u$ is the spatial Laplacian operator, which measures the local curvature of the surface.
+
+### 2. Analytical Approach: Separation of Variables
+To find exact theoretical modes of vibration for ideal geometries (such as a square membrane with fixed edges), one can use the **separation of variables method** by setting:
+$$u(x, y, t) = X(x) Y(y) T(t)$$
+
+This leads to harmonic solutions combining spatial sine profiles and temporal oscillations (Fourier modes):
+$$u(x,y,t) = \sum_{m,n} A_{mn} \sin\left(\frac{m \pi x}{L}\right) \sin\left(\frac{n \pi y}{L}\right) \cos(\omega_{mn} t)$$
+where $\omega_{mn} = c \pi \sqrt{(m/L)^2 + (n/L)^2}$ represents the natural angular frequencies of the system.
+
+### 3. Numerical Approach: Finite Differences
+While analytical Fourier expansions are ideal for steady-state modes, handling dynamic user interactions or complex geometries requires a **numerical discretization** using an explicit second-order centered finite difference scheme:
+
+* **Temporal Derivative:** 
+  $$\frac{\partial^2 u}{\partial t^2} \approx \frac{u_{i,j}^{n+1} - 2u_{i,j}^n + u_{i,j}^{n-1}}{dt^2}$$
+* **Spatial Laplacian (5-point stencil):** 
+  $$\Delta u \approx \frac{u_{i+1,j}^n + u_{i-1,j}^n + u_{i,j+1}^n + u_{i,j-1}^n - 4u_{i,j}^n}{dx^2}$$
+
+Combining these yields the explicit time-stepping recurrence relation:
+$$u_{i,j}^{n+1} = 2u_{i,j}^n - u_{i,j}^{n-1} + \left( \frac{c \cdot dt}{dx} \right)^2 \Delta u_{spatial}$$
+
+---
+
+## ⚙️ Numerical Implementation Details
+
+* **Vectorized Computations:** Spatial operators are computed efficiently across the grid matrices using NumPy vectorization.
+* **Stability & CFL Condition:** Governed by the factor $\left(\frac{c \cdot dt}{dx}\right)^2$, ensuring numerical convergence without exploding values.
+* **Energy Dissipation (Damping):** A selective attenuation factor is applied at each time step to naturally dissipate energy and simulate material/fluid viscosity.
+* **Boundary Conditions:** Dirichlet boundary conditions ($u = 0$) lock the outer edges of the domain to simulate fixed or absorbing walls where waves reflect.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+Ensure you have Python installed along with the essential scientific packages:
+```bash
+pip install numpy matplotlib
 
   
 <img width="1450" height="720" alt="image" src="https://github.com/user-attachments/assets/3709ab11-5e46-4e8f-b4c2-ebd2f32315ee" />
