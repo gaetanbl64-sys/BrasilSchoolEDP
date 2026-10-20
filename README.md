@@ -46,12 +46,5 @@ $$u_{i,j}^{n+1} = 2u_{i,j}^n - u_{i,j}^{n-1} + \left( \frac{c \cdot dt}{dx} \rig
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-Ensure you have Python installed along with the essential scientific packages:
-```bash
-pip install numpy matplotlib
-
   
 <img width="1450" height="720" alt="image" src="https://github.com/user-attachments/assets/3709ab11-5e46-4e8f-b4c2-ebd2f32315ee" />
